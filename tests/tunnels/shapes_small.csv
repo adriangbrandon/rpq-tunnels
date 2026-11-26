@@ -1,0 +1,4 @@
+id,expression,valid,total,unique
+1,a+,50,60,40
+2,a/b*,30,35,25
+3,(a|b)+/c,20,25,15

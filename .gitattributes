@@ -1,0 +1,2 @@
+# Keep query files byte for byte (they were written with CRLF line endings).
+*.tsv -text

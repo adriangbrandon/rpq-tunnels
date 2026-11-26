@@ -1,0 +1,19 @@
+adj-tunnels <OUT>/adj/wd.dat <OUT>/gen-7-3/queries.tsv --automata --out <OUT>/automata/gen-7-3.csv --reps 1
+adj-tunnels <OUT>/adj/wd.dat <OUT>/gen-7-3/queries.tsv --out <OUT>/gen-7-3/adj/cv.csv --uniform-cost --budgets 0,1000,10000,100000,inf --rel 1,4,16 --rel-slack 10 --reps 1 --pairs 5 --pair-reverse --vv none
+adj-tunnels <OUT>/adj/wd.dat <OUT>/gen-7-3/queries.tsv --out <OUT>/gen-7-3/adj/vv_bridge.csv --uniform-cost --budgets 0,1000,inf --rel 4,16 --rel-slack 10 --vv-reps 1 --reps 1 --vv bridge --vv-derive --vv-only --vv-samples 0 --vv-union
+adj-tunnels <OUT>/adj/wd.dat <T>/tunnels/data/paths-final.tsv --automata --out <OUT>/automata/log.csv --reps 1
+adj-tunnels <OUT>/adj/wd.dat <T>/tunnels/data/paths-final.tsv --max-queries 0 --out /dev/null
+adj-tunnels <OUT>/adj/wd.dat <T>/tunnels/data/paths-final.tsv --out <OUT>/adj/cv.csv --uniform-cost --budgets 0,1000,10000,100000,inf --rel 1,4,16 --rel-slack 10 --reps 1 --pairs 5 --pair-reverse --vv none
+adj-tunnels <OUT>/adj/wd.dat <T>/tunnels/data/paths-final.tsv --out <OUT>/adj/vv_bridge.csv --uniform-cost --budgets 0,1000,inf --rel 4,16 --rel-slack 10 --vv-reps 1 --reps 1 --vv bridge --vv-derive --vv-only --vv-samples 0 --vv-union
+adj-tunnels <OUT>/adj/wd.dat <T>/tunnels/data/paths-final.tsv --out <OUT>/sp_early_adj.csv --uniform-cost --budgets 0,1000,10000,100000,inf --rel 1,4,16 --rel-slack 10 --reps 1 --shortest --early-stop --pairs 5 --pair-reverse --vv-derive --vv-samples 5
+build-index-basic <OUT>/basic/wd.dat
+build-index-split <OUT>/split/wd.dat
+gen-queries <OUT>/basic/wd.dat <T>/shapes.csv <T>/tunnels/data/paths-final.tsv 7 --seed 3
+ring-tunnels <OUT>/basic/wd.dat <OUT>/gen-7-3/queries.tsv --out <OUT>/gen-7-3/cv.csv --uniform-cost --budgets 0,1000,10000,100000,inf --rel 1,4,16 --rel-slack 10 --reps 1 --pairs 5 --pair-reverse --vv none
+ring-tunnels <OUT>/basic/wd.dat <OUT>/gen-7-3/queries.tsv --out <OUT>/gen-7-3/sp.csv --uniform-cost --budgets 0,1000,10000,100000,inf --rel 1,4,16 --rel-slack 10 --reps 1 --shortest --pairs 5 --pair-reverse --vv-derive --vv-samples 5
+ring-tunnels <OUT>/basic/wd.dat <OUT>/gen-7-3/queries.tsv --out <OUT>/gen-7-3/vv_bridge.csv --uniform-cost --budgets 0,1000,inf --rel 4,16 --rel-slack 10 --vv-reps 1 --reps 1 --vv bridge --vv-derive --vv-only --vv-samples 0 --vv-union
+ring-tunnels <OUT>/basic/wd.dat <T>/tunnels/data/paths-final.tsv --out <OUT>/cv.csv --uniform-cost --budgets 0,1000,10000,100000,inf --rel 1,4,16 --rel-slack 10 --reps 1 --pairs 5 --pair-reverse --vv none
+ring-tunnels <OUT>/basic/wd.dat <T>/tunnels/data/paths-final.tsv --out <OUT>/sp_early.csv --uniform-cost --budgets 0,1000,10000,100000,inf --rel 1,4,16 --rel-slack 10 --reps 1 --shortest --early-stop --pairs 5 --pair-reverse --vv-derive --vv-samples 5
+ring-tunnels <OUT>/basic/wd.dat <T>/tunnels/data/paths-final.tsv --out <OUT>/vv_bridge.csv --uniform-cost --budgets 0,1000,inf --rel 4,16 --rel-slack 10 --vv-reps 1 --reps 1 --vv bridge --vv-derive --vv-only --vv-samples 0 --vv-union
+ring-tunnels-split <OUT>/split/wd.dat <OUT>/gen-7-3/queries.tsv --out <OUT>/gen-7-3/vv_ring.csv --uniform-cost --budgets 0,1000,inf --rel 4,16 --rel-slack 10 --vv-reps 1 --reps 1 --vv ring --vv-derive --vv-only --vv-samples 0
+ring-tunnels-split <OUT>/split/wd.dat <T>/tunnels/data/paths-final.tsv --out <OUT>/vv_ring.csv --uniform-cost --budgets 0,1000,inf --rel 4,16 --rel-slack 10 --vv-reps 1 --reps 1 --vv ring --vv-derive --vv-only --vv-samples 0

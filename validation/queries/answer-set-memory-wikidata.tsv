@@ -1,0 +1,3 @@
+?x (<http://www.wikidata.org/prop/direct/P21>/<http://www.wikidata.org/prop/direct/P461>)/<%http://www.wikidata.org/prop/direct/P21> ?y
+?x (<http://www.wikidata.org/prop/direct/P279>)+/(<%http://www.wikidata.org/prop/direct/P279>)+ ?y
+?x (<http://www.wikidata.org/prop/direct/P31>|<http://www.wikidata.org/prop/direct/P279>)/<%http://www.wikidata.org/prop/direct/P31> ?y

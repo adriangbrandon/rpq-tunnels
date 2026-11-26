@@ -1,0 +1,4 @@
+1 <http://example.org/pred/p1>
+2 <http://example.org/pred/p2>
+3 <http://example.org/pred/p3>
+4 <http://example.org/pred/p4>
