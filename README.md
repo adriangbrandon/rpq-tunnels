@@ -68,7 +68,11 @@ link the `.dat` and the dictionaries as `wd.dat`, `wd.dat.SO` and `wd.dat.P`. Th
 **The query log.** `paths-final.tsv`: 1,589 RPQs of the Wikidata log, one per line,
 `<subject> <rpq> <object>`, where each endpoint is an IRI or a variable (`?x`).
 
-> **TODO:** location of `paths-final.tsv` in the repository (or download link) pending.
+It is included in the repository as `queries/paths-final.tsv`.
+
+```bash
+ln -s $PWD/queries/paths-final.tsv $DATA/paths-final.tsv
+```
 
 **The expression shapes.** `WD_organic.csv`, from Hammerer and Martens
 ([zenodo.org/records/15363430](https://zenodo.org/records/15363430)). It is only needed to
@@ -83,7 +87,7 @@ OUT=$HOME/tunnels-out                    # all results; must not be inside $DATA
 WD=$DATA/wikidata-enumerated.dat
 WD_P=$DATA/wikidata-unsorted-enumerated.dat.P
 WD_SO=$DATA/wikidata-unsorted-enumerated.dat.SO
-Q=$DATA/paths-final.tsv
+Q=$PWD/queries/paths-final.tsv
 SHAPES=$DATA/WD_organic.csv
 ```
 
@@ -421,8 +425,7 @@ cp tunnels/paper.env.example tunnels/paper.env     # not versioned
 $EDITOR tunnels/paper.env
 ```
 
-Minimum to set, on their own lines of the file: `DATA_DIR` (where the three graph files,
-`paths-final.tsv` and `WD_organic.csv` are) and `OUT_DIR` (where everything is written; it cannot be
+Minimum to set, on their own lines of the file: `DATA_DIR` (where the three graph files and `WD_organic.csv` are) and `OUT_DIR` (where everything is written; it cannot be
 inside the directory of the `.dat`). The input files are looked up from `DATA_DIR`, so set it where
 it appears in the file, not at the end. The others have defaults or can be left empty:
 
@@ -431,7 +434,7 @@ it appears in the file, not at the end. The others have defaults or can be left 
 | `SDSL_ROOT` | prefix of the extended SDSL, for the `build` step |
 | `NAVGRAPH_DIR` | navGraph source; empty: no Compact |
 | `BUILD_DIR` | binaries; empty: `<repo>/build` |
-| `WD_DAT`, `WD_DICT_P`, `WD_DICT_SO`, `WD_QUERIES`, `SHAPES_CSV` | the input files; by default they are looked up in `DATA_DIR` as `wikidata-enumerated.dat`, `wikidata-unsorted-enumerated.dat.P` and `.SO`, `paths-final.tsv` and `WD_organic.csv` |
+| `WD_DAT`, `WD_DICT_P`, `WD_DICT_SO`, `WD_QUERIES`, `SHAPES_CSV` | the input files; by default they are looked up in `DATA_DIR` as `wikidata-enumerated.dat`, `wikidata-unsorted-enumerated.dat.P` and `.SO`, `queries/paths-final.tsv` and `WD_organic.csv` |
 | `RING_TIMEOUT` | time limit (s) of the Ring baseline (default 60) |
 | `GEN_N`, `GEN_SEED` | generated queries: how many and the seed (default 1000 and 1) |
 | `EXTRA_OPTS` | extra options for the `*-tunnels` programs, e.g. `--max-queries 50` for a quick test |
