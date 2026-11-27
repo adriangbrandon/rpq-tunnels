@@ -53,7 +53,7 @@ It is not reproducible on a laptop. To check the whole pipeline on a small graph
 
 Three kinds of input. All paths below are examples: put the files anywhere and point `DATA` to them.
 
-**The graph.** Three files:
+**The graph.** The graph is available at [zenodo.org/records/24588670](https://zenodo.org/records/24588670) and contains three files:
 
 | File | Content |
 |---|---|
@@ -64,8 +64,6 @@ Three kinds of input. All paths below are examples: put the files anywhere and p
 These are the names the scripts look for by default (section 8 shows how to give other names).
 The index builders need the three files side by side under one prefix, so the commands in section 4
 link the `.dat` and the dictionaries as `wd.dat`, `wd.dat.SO` and `wd.dat.P`. The scripts only read these files and never write next to them.
-
-> **TODO:** download link of the graph pending (to be added by the author).
 
 **The query log.** `paths-final.tsv`: 1,589 RPQs of the Wikidata log, one per line,
 `<subject> <rpq> <object>`, where each endpoint is an IRI or a variable (`?x`).
