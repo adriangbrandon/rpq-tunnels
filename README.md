@@ -70,10 +70,6 @@ link the `.dat` and the dictionaries as `wd.dat`, `wd.dat.SO` and `wd.dat.P`. Th
 
 It is included in the repository as `queries/paths-final.tsv`.
 
-```bash
-ln -s $PWD/queries/paths-final.tsv $DATA/paths-final.tsv
-```
-
 **The expression shapes.** `WD_organic.csv`, from Hammerer and Martens
 ([zenodo.org/records/15363430](https://zenodo.org/records/15363430)). It is only needed to
 generate extra queries (section 5).
