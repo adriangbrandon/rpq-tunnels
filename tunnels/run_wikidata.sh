@@ -2,8 +2,9 @@
 # Tunnels on Ring-RPQ over Wikidata.
 # Usage: tunnels/run_wikidata.sh <path to wikidata-enumerated.dat> <out dir> [extra ring-tunnels options]
 # (e.g. --max-queries 50 for a quick trial)
-# The .dat is only READ (a symlink to it is placed in the out dir). The dictionaries and the
-# queries come from tunnels/data unless the environment says otherwise:
+# The .dat and the dictionaries are only READ: symlinks to them (absolute paths) are placed in the
+# out dir, nothing is copied. The dictionaries and the queries come from tunnels/data unless the
+# environment says otherwise:
 #   BUILD_DIR   directory of the binaries           (default: <repo>/build)
 #   WD_DICT_P   predicate dictionary (.P)           (default: tunnels/data/wikidata-unsorted-enumerated.dat.P)
 #   WD_DICT_SO  subject/object dictionary (.SO)     (default: tunnels/data/wikidata-unsorted-enumerated.dat.SO)
@@ -19,19 +20,23 @@ DAT=$(readlink -f "${1:?path to wikidata-enumerated.dat}"); OUT=$(readlink -m "$
 HERE=$(cd "$(dirname "$0")" && pwd); B=$(cd "${BUILD_DIR:-$HERE/../build}" && pwd); DATA=$HERE/data
 Q=${WD_QUERIES:-$DATA/paths-final.tsv}
 [ -f "$DAT" ] || { echo "no such file: $DAT"; exit 1; }
+# the dictionaries are linked, not copied (they are large): resolve them now, before building anything
+DICT_P=$(readlink -m "${WD_DICT_P:-$DATA/wikidata-unsorted-enumerated.dat.P}")
+DICT_SO=$(readlink -m "${WD_DICT_SO:-$DATA/wikidata-unsorted-enumerated.dat.SO}")
+for f in "$DICT_P" "$DICT_SO"; do [ -f "$f" ] || { echo "no such dictionary: $f"; exit 1; }; done
 case "$OUT/" in "$(dirname "$DAT")/"*) echo "the out dir must not be inside $(dirname "$DAT")"; exit 1;; esac
 if [ -e "$OUT" ] && [ ! -f "$OUT/.ring-tunnels" ]; then echo "$OUT exists and is not an output of this script"; exit 1; fi
 mkdir -p "$OUT"; touch "$OUT/.ring-tunnels"
 mkdir -p "$OUT/basic" "$OUT/split"
 for v in basic split; do
   ln -sfn "$DAT" "$OUT/$v/wd.dat"
-  cp "${WD_DICT_P:-$DATA/wikidata-unsorted-enumerated.dat.P}" "$OUT/$v/wd.dat.P"
-  cp "${WD_DICT_SO:-$DATA/wikidata-unsorted-enumerated.dat.SO}" "$OUT/$v/wd.dat.SO"
+  ln -sfn "$DICT_P" "$OUT/$v/wd.dat.P"
+  ln -sfn "$DICT_SO" "$OUT/$v/wd.dat.SO"
 done
 TIME=""; [ -x /usr/bin/time ] && TIME="/usr/bin/time -v"
 [ -f "$OUT/basic/wd.dat.bwts.L" ] || $TIME "$B/build-index-basic" "$OUT/basic/wd.dat" > "$OUT/basic/index.log" 2>&1
 [ -f "$OUT/split/wd.dat.wt_pred_s" ] || $TIME "$B/build-index-split" "$OUT/split/wd.dat" > "$OUT/split/index.log" 2>&1
-ls -l "$OUT"/basic/wd.dat.* "$OUT"/split/wd.dat.* > "$OUT/index_sizes.txt"
+ls -lL "$OUT"/basic/wd.dat.* "$OUT"/split/wd.dat.* > "$OUT/index_sizes.txt"
 
 # Configuration of the paper: uniform cost model on every backend.
 BUD="--uniform-cost --budgets 0,1000,10000,100000,inf --rel 1,4,16 --rel-slack 10 $EXTRA"

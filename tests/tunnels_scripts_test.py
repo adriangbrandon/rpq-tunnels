@@ -144,13 +144,100 @@ def run_scripts(T, extra_env, cols, stub_build='build'):
     return sorted(l.replace(out, '<OUT>').replace(T, '<T>') for l in lines), out
 
 
+def check_dict_link(path, src, what):
+    """L2: path is a symbolic link whose target is the absolute path of src (and the content is the same)"""
+    check(os.path.islink(path), f'{what} is not a symbolic link')
+    if os.path.islink(path):
+        tgt = os.readlink(path)
+        check(os.path.isabs(tgt) and tgt == os.path.realpath(src), f'{what} -> {tgt}, expected the absolute {os.path.realpath(src)}')
+    if os.path.exists(path):
+        with open(path) as f, open(src) as g:
+            check(f.read() == g.read(), f'{what}: content differs from {src}')
+    else:
+        check(False, f'{what} does not exist (broken link?)')
+
+
+def make_tree(T, cols):
+    """Tree T/tunnels with stubs and a fake .dat, without running anything; returns (dat, out, log, tunnels dir)."""
+    shutil.copytree(os.path.join(ROOT, 'tunnels'), os.path.join(T, 'tunnels'),
+                    ignore=shutil.ignore_patterns('__pycache__', 'paper.env'))
+    log = os.path.join(T, 'argv.log')
+    open(log, 'w').close()
+    make_stubs(os.path.join(T, 'build'), log, cols)
+    os.makedirs(os.path.join(T, 'wd'))
+    dat = os.path.join(T, 'wd', 'wikidata-enumerated.dat')
+    open(dat, 'w').close()
+    return dat, os.path.join(T, 'out'), log, os.path.join(T, 'tunnels')
+
+
+def run_raw(script, args, env, cwd):
+    return subprocess.run(['bash', script] + args, env=env, cwd=cwd, stdout=subprocess.PIPE,
+                          stderr=subprocess.STDOUT, text=True)
+
+
+def relink_cases(cols):
+    """L3: a previous output with plain copies gets links on re-run (both scripts).
+    L4: a missing dictionary fails with its name, before building or running anything."""
+    with tempfile.TemporaryDirectory() as tmp:
+        T = os.path.realpath(os.path.join(tmp, 'c'))
+        os.makedirs(T)
+        dat, out, log, t = make_tree(T, cols)
+        P, SO, Q = write_data(os.path.join(T, 'dicts'), 'rerun')
+        env = dict(os.environ, WD_DICT_P=os.path.relpath(P, T), WD_DICT_SO=SO, WD_QUERIES=Q)
+        p = run_raw(os.path.join(t, 'run_wikidata.sh'), [dat, out, '--reps', '1'], env, T)
+        check(p.returncode == 0, f'L3: first run_wikidata.sh: {p.stdout[-300:]}')
+        p = run_raw(os.path.join(t, 'run_backends.sh'), [out, 'adj', '--reps', '1'], env, T)
+        check(p.returncode == 0, f'L3: first run_backends.sh: {p.stdout[-300:]}')
+        # an old output: regular copies in basic/ and adj/
+        for sub in ('basic', 'split', 'adj'):
+            for ext, src in (('P', P), ('SO', SO)):
+                d = os.path.join(out, sub, 'wd.dat.' + ext)
+                os.remove(d)
+                shutil.copyfile(src, d)
+                check(not os.path.islink(d), 'L3: setup')
+        p = run_raw(os.path.join(t, 'run_wikidata.sh'), [dat, out, '--reps', '1'], env, T)
+        check(p.returncode == 0, f'L3: re-run run_wikidata.sh: {p.stdout[-300:]}')
+        p = run_raw(os.path.join(t, 'run_backends.sh'), [out, 'adj', '--reps', '1'], env, T)
+        check(p.returncode == 0, f'L3: re-run run_backends.sh: {p.stdout[-300:]}')
+        for sub in ('basic', 'split', 'adj'):
+            for ext, src in (('P', P), ('SO', SO)):
+                check_dict_link(os.path.join(out, sub, 'wd.dat.' + ext), src, f'L3: {sub}/wd.dat.{ext} after re-run')
+        # the sources are intact (ln -sfn replaced the copies, it did not write through anything)
+        with open(P) as f:
+            check(f.read() == '1 <http://example.org/rerun/P>\n', 'L3: the source dictionary changed')
+        # L4, backends: a missing dictionary stops before any command runs
+        with open(log) as f:
+            before = f.read()
+        for var in ('WD_DICT_SO', 'WD_DICT_P'):
+            bad = dict(env, **{var: '/no/existe-' + var})
+            p = run_raw(os.path.join(t, 'run_backends.sh'), [out, 'adj', '--reps', '1'], bad, T)
+            check(p.returncode != 0 and '/no/existe-' + var in p.stdout, f'L4: run_backends.sh {var}: rc {p.returncode}\n{p.stdout[-300:]}')
+            with open(log) as f:
+                check(f.read() == before, f'L4: run_backends.sh {var}: a command ran')
+    with tempfile.TemporaryDirectory() as tmp:
+        T = os.path.realpath(os.path.join(tmp, 'd'))
+        os.makedirs(T)
+        dat, out, log, t = make_tree(T, cols)
+        P, SO, Q = write_data(os.path.join(T, 'dicts'), 'missing')
+        for var in ('WD_DICT_SO', 'WD_DICT_P'):
+            bad = dict(os.environ, WD_DICT_P=P, WD_DICT_SO=SO, WD_QUERIES=Q)
+            bad[var] = '/no/existe-' + var
+            p = run_raw(os.path.join(t, 'run_wikidata.sh'), [dat, out, '--reps', '1'], bad, T)
+            check(p.returncode != 0 and '/no/existe-' + var in p.stdout, f'L4: run_wikidata.sh {var}: rc {p.returncode}\n{p.stdout[-300:]}')
+            with open(log) as f:
+                check(f.read() == '', f'L4: run_wikidata.sh {var}: a command ran (the build started)')
+            check(not os.path.exists(out), f'L4: run_wikidata.sh {var}: the out dir was created')
+
+
 def env_case(cols):
     """BUILD_DIR, WD_DICT_P, WD_DICT_SO and WD_QUERIES redirect the commands (no golden)."""
     with tempfile.TemporaryDirectory() as tmp:
         T = os.path.realpath(os.path.join(tmp, 'b'))
         os.makedirs(T)
         P, SO, Q = write_data(os.path.join(T, 'elsewhere'), 'custom')
-        env = {'BUILD_DIR': os.path.join(T, 'otherbuild'), 'WD_DICT_P': P, 'WD_DICT_SO': SO, 'WD_QUERIES': Q}
+        # both dictionaries relative (the scripts run with cwd=T)
+        env = {'BUILD_DIR': os.path.join(T, 'otherbuild'), 'WD_DICT_P': os.path.relpath(P, T), 'WD_DICT_SO': os.path.relpath(SO, T),
+               'WD_QUERIES': Q}
         lines, out = run_scripts(T, env, cols, stub_build='otherbuild')
         check(len(lines) == 19, f"env case: {len(lines)} commands, expected 19")
         default_q = '<T>/tunnels/data/paths-final.tsv'
@@ -163,8 +250,7 @@ def env_case(cols):
               'env case: gen-queries does not get WD_QUERIES')
         for sub in ('basic', 'split', 'adj'):
             for ext, src in (('P', P), ('SO', SO)):
-                with open(os.path.join(out, sub, 'wd.dat.' + ext)) as f, open(src) as g:
-                    check(f.read() == g.read(), f'env case: {sub}/wd.dat.{ext} is not the configured dictionary')
+                check_dict_link(os.path.join(out, sub, 'wd.dat.' + ext), src, f'env case: {sub}/wd.dat.{ext}')
 
 
 def main():
@@ -225,9 +311,15 @@ def main():
             check(os.path.exists(os.path.join(out, n + '.csv')), f'missing {n}.csv')
         check(os.path.exists(os.path.join(out, 'automata', 'log.csv')), 'missing automata/log.csv')
         with open(os.path.join(out, 'basic', 'wd.dat.P')) as f:
-            check('default/P' in f.read(), 'the default dictionary P was not copied')
+            check('default/P' in f.read(), 'the default dictionary P was not linked')
+        data = os.path.join(T, 'tunnels', 'data')
+        for sub in ('basic', 'split', 'adj'):
+            for ext in ('P', 'SO'):
+                check_dict_link(os.path.join(out, sub, 'wd.dat.' + ext),
+                                os.path.join(data, 'wikidata-unsorted-enumerated.dat.' + ext), f'default case: {sub}/wd.dat.{ext}')
 
     env_case(cols)
+    relink_cases(cols)
     if failures:
         print(f'{len(failures)} failure(s)')
         return 1

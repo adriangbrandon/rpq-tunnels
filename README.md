@@ -63,8 +63,7 @@ Three kinds of input. All paths below are examples: put the files anywhere and p
 
 These are the names the scripts look for by default (section 8 shows how to give other names).
 The index builders need the three files side by side under one prefix, so the commands in section 4
-link the `.dat` and copy the dictionaries as `wd.dat.SO` and `wd.dat.P`. The scripts only read the
-`.dat` and never write next to it.
+link the `.dat` and the dictionaries as `wd.dat`, `wd.dat.SO` and `wd.dat.P`. The scripts only read these files and never write next to them.
 
 > **TODO:** download link of the graph pending (to be added by the author).
 
@@ -123,14 +122,14 @@ all their options (the full list is in `tunnels/README.md`).
 ## 4. Build each graph representation
 
 Every representation lives in its own directory under `$OUT`, with the three graph files in it
-(the `.dat` as a symbolic link, the dictionaries copied):
+(all three as symbolic links to the originals, nothing is copied):
 
 ```bash
 for v in basic split adj; do
   mkdir -p $OUT/$v
   ln -sfn $(readlink -f $WD) $OUT/$v/wd.dat
-  cp $WD_P $OUT/$v/wd.dat.P
-  cp $WD_SO $OUT/$v/wd.dat.SO
+  ln -sfn $(readlink -f $WD_P) $OUT/$v/wd.dat.P
+  ln -sfn $(readlink -f $WD_SO) $OUT/$v/wd.dat.SO
 done
 touch $OUT/.ring-tunnels       # marks $OUT as an output directory of these scripts
 ```
@@ -164,7 +163,7 @@ Only if you compiled with `-DNAVGRAPH_DIR`. The builder reads `wd.dat` from the 
 ```bash
 mkdir -p $OUT/nav
 ln -sfn $(readlink -f $WD) $OUT/nav/wd.dat
-cp $WD_P $OUT/nav/wd.dat.P; cp $WD_SO $OUT/nav/wd.dat.SO
+ln -sfn $(readlink -f $WD_P) $OUT/nav/wd.dat.P; ln -sfn $(readlink -f $WD_SO) $OUT/nav/wd.dat.SO
 (cd $OUT/nav && /usr/bin/time -v $B/nav-build-index wd.dat > index.log 2>&1)
 ```
 
@@ -186,8 +185,8 @@ Leaves `wd.dat.adj` and `index.log` in `$OUT/adj/`.
 The sizes of the index files of every representation, as a list of files:
 
 ```bash
-ls -l $OUT/basic/wd.dat.* $OUT/split/wd.dat.* > $OUT/index_sizes.txt
-ls -l $OUT/adj/wd.dat.* > $OUT/adj/index_sizes.txt
+ls -lL $OUT/basic/wd.dat.* $OUT/split/wd.dat.* > $OUT/index_sizes.txt
+ls -lL $OUT/adj/wd.dat.* > $OUT/adj/index_sizes.txt
 ```
 
 `tunnels/run_wikidata.sh` and `tunnels/run_backends.sh` (section 8) do all of this, and skip an
@@ -472,7 +471,7 @@ with `--only` (for example `--only build,log,generated,backends,pathfinder,figur
 $OUT_DIR/
   .ring-tunnels                 marks the directory as an output
   reproduce.log                 the output of every step
-  basic/  split/  adj/  nav/    one directory per representation: wd.dat (link), the dictionaries,
+  basic/  split/  adj/  nav/    one directory per representation: wd.dat and the dictionaries (links),
                                 the index files, index.log, index_sizes.txt; adj/ and nav/ also hold
                                 cv.csv, vv_bridge.csv, their logs and summaries
   cv.csv  vv_bridge.csv  vv_ring.csv  vv_all.csv      sections 5 (+ .log files)

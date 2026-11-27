@@ -263,10 +263,10 @@ The data is not in the repo. The scripts take it from the following environment 
 |---|---|---|
 | `BUILD_DIR` | `<repo>/build` | directory of the binaries (the five scripts) |
 | `WD_DICT_P` | `tunnels/data/wikidata-unsorted-enumerated.dat.P` | predicate dictionary (`run_wikidata.sh`, `run_backends.sh`) |
-| `WD_DICT_SO` | `tunnels/data/wikidata-unsorted-enumerated.dat.SO` | subject and object dictionary (idem) |
+| `WD_DICT_SO` | `tunnels/data/wikidata-unsorted-enumerated.dat.SO` | subject and object dictionary (idem); both are linked, not copied, with absolute paths (a relative value is resolved first) |
 | `WD_QUERIES` | `tunnels/data/paths-final.tsv` | RPQ log (all five; in `run_generated.sh`, the predicate *pool*) |
 
-From the graph it only **reads** the `.dat` (it leaves a symlink in the output directory) and writes everything under the
+From the graph it only **reads** the `.dat` and the dictionaries (it leaves symlinks to them in the output directory; nothing is copied) and writes everything under the
 output directory, which cannot be inside the directory of the `.dat` nor be a foreign directory
 that already exists:
 
